@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f2744">
+  <title>INYATHI — Driver Login</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-bg">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-logo">IN<span>YATHI</span></div>
+        <div class="login-tagline">Fleet Management System</div>
+        <span class="login-role-badge driver">Driver Portal</span>
+      </div>
+
+      <form id="driver-login-form" novalidate>
+        <div class="login-field">
+          <label for="email">Driver Email</label>
+          <input type="email" id="email" class="login-input" placeholder="driver@inyathi.co.za" autocomplete="email" required>
+        </div>
+        <div class="login-field">
+          <label for="password">Password</label>
+          <input type="password" id="password" class="login-input" placeholder="Enter your password" autocomplete="current-password" required>
+        </div>
+        <div class="login-actions">
+          <button type="submit" class="btn btn-amber btn-full" id="btn-login">Sign In</button>
+          <a href="driver-forgot-password.html" class="btn btn-outline btn-full">Forgot Password</a>
+        </div>
+      </form>
+
+      <div id="msg" class="login-msg" role="alert" aria-live="polite"></div>
+
+      <div class="login-links">
+        <a href="admin-login.html" class="login-link">Admin Login →</a>
+      </div>
+
+      <div class="login-footer">INYATHI (Pty) Ltd · Fleet Management</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb  = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const msg = document.getElementById('msg');
+    const AUTH_TIMEOUT_MS = 15000;
+
+    document.getElementById('driver-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email    = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+      const btn      = document.getElementById('btn-login');
+      if (!email || !password) return show('Please enter email and password.', 'error');
+
+      setLoading(btn, true, 'Signing in…');
+      show('', '');
+
+      try {
+        const { data, error } = await withTimeout(
+          sb.auth.signInWithPassword({ email, password }),
+          'Login is taking too long. Please check your connection and try again.'
+        );
+        if (error) throw error;
+
+        const userId = data?.user?.id;
+        if (!userId) throw new Error('Login failed: no user session returned.');
+
+        const { data: profile, error: pe } = await withTimeout(
+          sb.from('profiles').select('role,is_active').eq('id', userId).maybeSingle(),
+          'Login succeeded, but profile verification timed out. Please try again.'
+        );
+        if (pe) throw pe;
+        if (!profile) throw new Error('Driver profile not found. Please contact admin.');
+        if (profile.role !== 'driver') { await signOutLocalOnly(); throw new Error('Access denied: driver account required.'); }
+        if (profile.is_active === false) { await signOutLocalOnly(); throw new Error('Your account is inactive. Contact admin.'); }
+
+        sb.from('profiles').update({ last_login: new Date().toISOString() }).eq('id', userId)
+          .then(({ error }) => { if (error) console.warn('Unable to update last login:', error); })
+          .catch((err) => console.warn('Unable to update last login:', err));
+        show('Login successful. Redirecting…', 'success');
+        window.location.assign('driver-dashboard.html');
+      } catch (err) {
+        show(err?.message || 'Login failed. Please check your details.', 'error');
+        setLoading(btn, false);
+      }
+    });
+
+    async function signOutLocalOnly() {
+      try { await sb.auth.signOut({ scope: 'local' }); } catch (err) { console.warn('Local sign out failed:', err); }
+    }
+
+    function withTimeout(promise, timeoutMessage) {
+      let timeoutId;
+      const timeout = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), AUTH_TIMEOUT_MS);
+      });
+      return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+    }
+
+    function setLoading(btn, isLoading, text = 'Sign In') {
+      btn.disabled = isLoading;
+      btn.textContent = text;
+    }
+
+    function show(text, type) {
+      msg.textContent = text;
+      msg.className = text ? `login-msg ${type}` : 'login-msg';
+    }
+  </script>
+</body>
+</html>

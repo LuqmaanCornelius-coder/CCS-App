@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f2744">
+  <title>INYATHI — Driver</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="offline-banner">📵 You are offline — changes will sync when reconnected</div>
+
+<!-- ── SIDEBAR OVERLAY ──────────────────────────────────────── -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<nav id="app-sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">IN<span>YATHI</span></div>
+    <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
+  </div>
+  <div class="sidebar-user">
+    <div class="sidebar-user-name" id="sidebar-driver-name">Driver</div>
+    <div class="sidebar-user-role">Driver Portal</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link active" data-tab="tasks" onclick="switchDriverTab('tasks')">
+        <span class="sidebar-nav-icon">✅</span> My Tasks
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <a href="inspection.html" class="sidebar-nav-link">
+        <span class="sidebar-nav-icon">🔍</span> Inspection Sheet
+      </a>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="recon" onclick="switchDriverTab('recon')">
+        <span class="sidebar-nav-icon">📊</span> Recon Sheet
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="checklists" onclick="switchDriverTab('checklists')">
+        <span class="sidebar-nav-icon">🛠</span> Vehicle Checklists
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="incidents" onclick="switchDriverTab('incidents')">
+        <span class="sidebar-nav-icon">🚨</span> Incident Reports
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" onclick="window.location.href='vehicle-expenses.html'">
+        <span class="sidebar-nav-icon">🔧</span> Log Expense / Damage
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="transfer-recon" onclick="switchDriverTab('transfer-recon')">
+        <span class="sidebar-nav-icon">📝</span> Transfer Recon
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="documents" onclick="switchDriverTab('documents')">
+        <span class="sidebar-nav-icon">📁</span> My Documents
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="fines" onclick="switchDriverTab('fines')">
+        <span class="sidebar-nav-icon">🚦</span> My Fines
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="sidebar-logout" id="btn-signout">
+      <span class="sidebar-nav-icon">⏻</span> Sign Out
+    </button>
+  </div>
+</nav>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="app-header">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn-icon" id="sidebar-toggle" aria-label="Open menu">
+      <div class="hamburger-icon"><span></span><span></span><span></span></div>
+    </button>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2">
+        <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      IN<span>YATHI</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span class="header-user" id="driver-name-header"></span>
+  </div>
+</header>
+
+<div class="context-bar">
+  <div class="breadcrumbs" aria-label="Breadcrumb"><span>Driver</span><span>Dashboard</span><span id="driver-context-tab-label">My Tasks</span></div>
+</div>
+
+<!-- ── TAB NAV ──────────────────────────────────────────────── -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="tasks" id="tab-btn-tasks">✅ My Tasks</button>
+  <button class="tab-btn" data-tab="recon" id="tab-btn-recon">📊 Recon Sheet</button>
+  <button class="tab-btn" data-tab="checklists" id="tab-btn-checklists">🛠 Vehicle Checklists</button>
+  <button class="tab-btn" data-tab="incidents" id="tab-btn-incidents">🚨 Incident Reports</button>
+  <button class="tab-btn" data-tab="transfer-recon" id="tab-btn-transfer-recon">📝 Transfer Recon</button>
+  <button class="tab-btn" data-tab="documents" id="tab-btn-documents">📁 My Documents</button>
+  <button class="tab-btn" data-tab="fines" id="tab-btn-fines">🚦 My Fines</button>
+</nav>
+
+<!-- ── MAIN ──────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- ═══ TASKS TAB ═══ -->
+  <div class="tab-panel active" id="tab-tasks">
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-value" id="task-stat-upcoming" style="color:var(--amber)">—</div><div class="stat-label">Upcoming</div></div>
+      <div class="stat-card"><div class="stat-value" id="task-stat-active" style="color:var(--green)">—</div><div class="stat-label">Active Now</div></div>
+      <div class="stat-card"><div class="stat-value" id="task-stat-completed" style="color:var(--navy-mid)">—</div><div class="stat-label">Completed</div></div>
+      <div class="stat-card"><div class="stat-value" id="task-stat-total">—</div><div class="stat-label">Total</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Active Trips</div>
+          <div class="card-subtitle">Currently in progress</div>
+        </div>
+        <a href="inspection.html" class="btn btn-amber btn-sm">+ Inspection</a>
+      </div>
+      <div id="tasks-active-list">
+        <div class="empty-state"><div class="empty-icon">🚌</div><p>No active trips right now.</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Upcoming Trips</div>
+      </div>
+      <div id="tasks-upcoming-list">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Recent Completed</div>
+      </div>
+      <div id="tasks-completed-list">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ RECON TAB ═══ -->
+  <div class="tab-panel" id="tab-recon">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Weekly Recon Sheet</div>
+          <div class="card-subtitle">Fill all cost lines and submit for admin review</div>
+        </div>
+      </div>
+      <form id="form-recon">
+        <div class="form-row">
+          <div class="form-group"><label>Driver Name</label><input id="recon-driver-name" class="form-control" readonly></div>
+          <div class="form-group"><label>Tour Reference</label><input id="recon-tour-reference" class="form-control" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Tour Vehicle</label><input id="recon-tour-vehicle" class="form-control"></div>
+          <div class="form-group"><label>Vehicle Reg</label><input id="recon-vehicle-reg" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Start KM</label><input type="number" id="recon-start-km" class="form-control"></div>
+          <div class="form-group"><label>End KM</label><input type="number" id="recon-end-km" class="form-control"></div>
+        </div>
+        <div class="form-group">
+          <label>Slip Lines <span style="font-weight:400;color:var(--text-muted)">(Date / ODO / KM / Litres / Cost / Notes)</span></label>
+          <textarea id="recon-lines" class="form-control" rows="5" placeholder="2026-05-12 | 125000 | 320 | 45 | 900.00 | Fuel"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Slip Line Photos
+            <span style="font-weight:400;color:var(--text-muted)">
+              (receipts, fuel slips – up to 10 images)
+            </span>
+          </label>
+          <label class="media-capture-btn" style="aspect-ratio:unset;padding:14px">
+            <span class="icon">📷</span>
+            <span>Tap to add slip photos</span>
+            <input type="file" id="recon-slip-photos" accept="image/*"
+                   capture="environment" multiple>
+          </label>
+          <div class="expense-preview-grid" id="recon-slip-preview"
+               style="margin-top:10px"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Trip Budget</label><input id="recon-trip-budget" class="form-control"></div>
+          <div class="form-group"><label>Trip Cost</label><input id="recon-trip-cost" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Driver Food</label><input id="recon-driver-food" class="form-control"></div>
+          <div class="form-group"><label>Flights To</label><input id="recon-flights-to" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Flights From</label><input id="recon-flights-from" class="form-control"></div>
+          <div class="form-group"><label>Driver Rate</label><input id="recon-driver-rate" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Accommodation</label><input id="recon-accommodation" class="form-control"></div>
+          <div class="form-group"><label>Total Profit/Loss</label><input id="recon-profit-loss" class="form-control"></div>
+        </div>
+        <div class="form-group"><label>Director Sign Off</label><input id="recon-director-signoff" class="form-control" placeholder="Office use only"></div>
+        <button type="submit" class="btn btn-amber btn-full" style="padding:13px;font-size:1rem">Submit Recon Sheet</button>
+      </form>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">Previous Recon Sheets</div>
+      <div id="recon-history-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+
+  <div class="tab-panel" id="tab-checklists"><div class="card"><div class="card-title">Vehicle Checklists</div><form id="checklist-form"><input type="date" id="checklist-date" class="form-control" readonly><select id="checklist-vehicle" class="form-control"></select><div id="checklist-items"></div><textarea id="checklist-notes" class="form-control" placeholder="Notes..."></textarea><input type="file" accept=".pdf" id="checklist-pdf-input" class="form-control"><button class="btn btn-amber btn-full" type="submit">Submit Checklist</button></form><div id="checklist-history"></div></div></div>
+  <div class="tab-panel" id="tab-incidents">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Report an Incident</div>
+        <div class="card-subtitle">
+          Submit accident, damage, or safety reports for admin review
+        </div>
+      </div>
+    </div>
+
+    <form id="incident-form" novalidate>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="incident-booking">Link to Booking</label>
+          <select id="incident-booking" class="form-control">
+            <option value="">— Select booking —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="incident-vehicle-reg">
+            Vehicle Reg <span class="required">*</span>
+          </label>
+          <input type="text" id="incident-vehicle-reg" class="form-control"
+            placeholder="e.g. CA 123 456" required
+            style="text-transform:uppercase">
+          <small style="color:var(--text-muted);font-size:.75rem">
+            Auto-fills from selected booking or enter manually
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="incident-type">Incident Type <span class="required">*</span></label>
+          <select id="incident-type" class="form-control" required>
+            <option value="">— Select type —</option>
+            <option value="accident">Accident</option>
+            <option value="damage">Vehicle Damage</option>
+            <option value="theft">Theft / Break-in</option>
+            <option value="breakdown">Breakdown</option>
+            <option value="traffic_violation">Traffic Violation</option>
+            <option value="passenger_incident">Passenger Incident</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="incident-location">Location</label>
+          <input type="text" id="incident-location" class="form-control"
+            placeholder="e.g. N2 near Strand, Cape Town">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="incident-description">
+          Description <span class="required">*</span>
+        </label>
+        <textarea id="incident-description" class="form-control" rows="4"
+          placeholder="Describe what happened, sequence of events, conditions…"
+          required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="incident-injuries"
+            style="width:18px;height:18px;accent-color:var(--amber)">
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">
+            Injuries involved (passengers or third parties)
+          </span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          Photos
+          <span style="font-weight:400;color:var(--text-muted)">
+            (damage, scene — up to 10 images)
+          </span>
+        </label>
+        <label class="media-capture-btn" style="aspect-ratio:unset;padding:14px">
+          <span class="icon">📷</span>
+          <span>Tap to add incident photos</span>
+          <input type="file" id="incident-photos" accept="image/*"
+            capture="environment" multiple>
+        </label>
+        <div class="expense-preview-grid" id="incident-photo-preview"
+             style="margin-top:10px"></div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          Supporting Documents
+          <span style="font-weight:400;color:var(--text-muted)">(PDF, Word)</span>
+        </label>
+        <input type="file" id="incident-pdf" class="form-control"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          multiple>
+      </div>
+
+      <button type="submit" class="btn btn-amber btn-full"
+              style="padding:13px;font-size:1rem">
+        Submit Incident Report
+      </button>
+    </form>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">My Incident Reports</div>
+    <div id="incident-history"><div class="spinner"></div></div>
+  </div>
+</div>
+  <div class="tab-panel" id="tab-fines">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">My Traffic Fines</div>
+          <div class="card-subtitle">Only fines logged to your driver profile are shown here.</div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="loadDriverFines()">Refresh</button>
+      </div>
+      <div id="driver-fines-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ TRANSFER RECON TAB ═══ -->
+  <div class="tab-panel" id="tab-transfer-recon">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Transfer Recon for Weekly Payment</div>
+          <div class="card-subtitle" id="tr-week-label">Current week</div>
+        </div>
+        <span id="tr-status-badge"></span>
+      </div>
+
+      <div class="tr-notice" style="background:var(--amber-light,#fffbeb);border:1px solid var(--amber);border-radius:8px;padding:12px 14px;font-size:.82rem;color:var(--navy);margin-bottom:16px;line-height:1.5">
+        All transfer information to be added here. Client reference numbers to be added to every date.
+        <strong>NO salary will be paid if this form has not been completed and sent to the office by every Thursday.</strong>
+        Payments will be done once form has been received and checked. NO immediate payments will be made.
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Driver Name</label>
+        <input id="tr-driver-name" class="form-control" readonly>
+      </div>
+
+      <div id="tr-submitted-notice" style="display:none;background:var(--green-light,#f0fdf4);border:1px solid var(--green);border-radius:8px;padding:12px 14px;font-size:.85rem;color:var(--green-dark,#166534);margin-bottom:14px;font-weight:600">
+        ✅ This transfer recon sheet has been submitted and is locked.
+      </div>
+
+      <div class="card-title" style="font-size:.9rem;margin-bottom:10px">Transfer Entries</div>
+
+      <div id="tr-table-wrapper" style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px">
+        <table id="tr-table" style="width:100%;border-collapse:collapse;font-size:.82rem">
+          <thead>
+            <tr style="background:var(--navy);color:#fff">
+              <th style="padding:8px 6px;text-align:left;min-width:90px">Vehicle Reg</th>
+              <th style="padding:8px 6px;text-align:left;min-width:90px">Vehicle Name</th>
+              <th style="padding:8px 6px;text-align:left;min-width:110px">Transfer Date</th>
+              <th style="padding:8px 6px;text-align:left;min-width:140px">Tour/Transfer Ref Nr <span class="required">*</span></th>
+              <th style="padding:8px 6px;text-align:left;min-width:130px">T/L/A Type</th>
+              <th style="padding:8px 6px;text-align:left;min-width:130px">Description</th>
+              <th style="padding:8px 6px;text-align:left;min-width:100px">Notes</th>
+              <th style="padding:8px 6px;text-align:center;width:44px"></th>
+            </tr>
+          </thead>
+          <tbody id="tr-table-body"></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="tr-form-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="tr-add-row-btn" onclick="addTransferRow()">+ Add Transfer</button>
+      </div>
+
+      <div style="margin-top:18px" id="tr-submit-wrapper">
+        <button type="button" class="btn btn-amber btn-full" id="tr-submit-btn" style="padding:13px;font-size:1rem" onclick="submitTransferRecon()">
+          Submit Transfer Recon
+        </button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">Previous Submissions</div>
+      <div id="tr-history-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-documents"><div class="card"><div class="card-title">My Documents</div><div id="my-documents-list"></div></div></div>
+</main>
+
+<div id="toast-container"></div>
+
+<!-- Transfer Recon Edit Request Modal -->
+<div class="modal-overlay" id="modal-transfer-recon-edit-request">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Request Transfer Recon Edit</span>
+      <button class="modal-close" onclick="closeModal('modal-transfer-recon-edit-request')">✕</button>
+    </div>
+    <input type="hidden" id="transfer-recon-edit-request-id">
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:14px;line-height:1.5">
+      Submitted transfer recon sheets are locked. Your edit request will be sent to the admin for OTP-verified approval.
+    </p>
+    <div class="form-group">
+      <label>Reason for Edit Request <span class="required">*</span></label>
+      <textarea id="transfer-recon-edit-reason" class="form-control" rows="3"
+        placeholder="Explain which transfers need to be corrected and why…" required></textarea>
+    </div>
+    <button class="btn btn-amber btn-full" onclick="submitTransferReconEditRequest()">Submit Request</button>
+  </div>
+</div>
+
+<!-- Recon Edit Request Modal (Feature 3) -->
+<div class="modal-overlay" id="modal-recon-edit-request">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Request Recon Edit</span>
+      <button class="modal-close" onclick="closeModal('modal-recon-edit-request')">✕</button>
+    </div>
+    <input type="hidden" id="recon-edit-request-id">
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:14px;line-height:1.5">
+      Submitted recon sheets are locked. Your edit request will be sent to the admin for approval.
+    </p>
+    <div class="form-group">
+      <label>Reason for Edit Request <span class="required">*</span></label>
+      <textarea id="recon-edit-reason" class="form-control" rows="3" placeholder="Explain which fields need to be corrected and why…" required></textarea>
+    </div>
+    <button class="btn btn-amber btn-full" onclick="submitReconEditRequest()">Submit Request</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="driver-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f2744">
+  <title>INYATHI — Admin</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="offline-banner">📵 You are offline — changes will sync when reconnected</div>
+
+<!-- ── SIDEBAR OVERLAY ──────────────────────────────────────── -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<nav id="app-sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">IN<span>YATHI</span></div>
+    <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
+  </div>
+  <div class="sidebar-user">
+    <div class="sidebar-user-name" id="sidebar-admin-name">Admin</div>
+    <div class="sidebar-user-role">Administrator</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link active" data-tab="calendar" onclick="switchTab('calendar')">
+        <span class="sidebar-nav-icon">📅</span> Calendar
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="fleet" onclick="switchTab('fleet')">
+        <span class="sidebar-nav-icon">🚌</span> Fleet Vehicles
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <a href="rented-in-vehicles.html" class="sidebar-nav-link">
+        <span class="sidebar-nav-icon">🚗</span> Rented Vehicles
+      </a>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="drivers" onclick="switchTab('drivers')">
+        <span class="sidebar-nav-icon">👥</span> Drivers
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="recon" onclick="switchTab('recon')">
+        <span class="sidebar-nav-icon">📊</span> Recon Review
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="incidents" onclick="switchTab('incidents')">
+        <span class="sidebar-nav-icon">🚨</span> Incident Reports
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="wages" onclick="switchTab('wages')">
+        <span class="sidebar-nav-icon">💷</span> Wages Reconciliation
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="transfer-recon" onclick="switchTab('transfer-recon')">
+        <span class="sidebar-nav-icon">📝</span> Transfer Recon
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="checklists" onclick="switchTab('checklists')">
+        <span class="sidebar-nav-icon">🛠</span> Vehicle Checklists
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <a href="vehicle-expenses.html" class="sidebar-nav-link">
+        <span class="sidebar-nav-icon">🔧</span> Damages &amp; Expenses
+      </a>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="traffic-fines" onclick="switchTab('traffic-fines')">
+        <span class="sidebar-nav-icon">🚦</span> Traffic Fines
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="reports" onclick="switchTab('reports')">
+        <span class="sidebar-nav-icon">📋</span> Reports
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="inspections" onclick="switchTab('inspections')">
+        <span class="sidebar-nav-icon">🔍</span> Inspections
+      </button>
+    </div>
+    <div class="sidebar-nav-item">
+      <button class="sidebar-nav-link" data-tab="bookings-archive" onclick="switchTab('bookings-archive')">
+        <span class="sidebar-nav-icon">📚</span> Bookings Archive
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="sidebar-logout" id="btn-signout-sidebar">
+      <span class="sidebar-nav-icon">⏻</span> Sign Out
+    </button>
+  </div>
+</nav>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="app-header">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn-icon" id="sidebar-toggle" aria-label="Open menu">
+      <div class="hamburger-icon"><span></span><span></span><span></span></div>
+    </button>
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2">
+        <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      IN<span>YATHI</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="header-search" role="search">
+      <input type="search" class="form-control" placeholder="Search bookings, drivers, vehicles…" aria-label="Search">
+    </div>
+    <div class="region-toggle" id="region-toggle" role="group" aria-label="Region">
+      <button type="button" class="region-toggle-btn" data-region="Cape Town">Cape Town</button>
+      <button type="button" class="region-toggle-btn" data-region="Joburg">Joburg</button>
+    </div>
+    <span data-sync-wrapper style="display:none">
+      <span class="sync-count sync-badge">0</span>
+    </span>
+    <span class="header-user" id="admin-name"></span>
+      </div>
+</header>
+
+<div class="context-bar">
+  <div class="breadcrumbs" aria-label="Breadcrumb"><span>Admin</span><span>Dashboard</span><span id="context-tab-label">Calendar</span></div>
+</div>
+
+<!-- ── TAB NAV ──────────────────────────────────────────────── -->
+<nav class="tab-nav" id="main-tab-nav">
+  <button class="tab-btn active" data-tab="calendar">📅 Calendar</button>
+  <button class="tab-btn" data-tab="fleet">🚌 Fleet</button>
+  <button class="tab-btn" data-tab="drivers">👥 Drivers</button>
+  <button class="tab-btn" data-tab="recon">📊 Recon</button>
+  <button class="tab-btn" data-tab="incidents">🚨 Incident Reports</button>
+  <button class="tab-btn" data-tab="wages">💷 Wages Reconciliation</button>
+  <button class="tab-btn" data-tab="transfer-recon">📝 Transfer Recon</button>
+  <button class="tab-btn" data-tab="checklists">🛠 Vehicle Checklists</button>
+  <button class="tab-btn" data-tab="traffic-fines">🚦 Traffic Fines</button>
+  <button class="tab-btn" data-tab="reports">📋 Reports</button>
+  <button class="tab-btn" data-tab="inspections">🔍 Inspections</button>
+  <button class="tab-btn" data-tab="bookings-archive">📚 Bookings Archive</button>
+</nav>
+
+<!-- ── MAIN ──────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- ═══ CALENDAR TAB ═══ -->
+  <div class="tab-panel active" id="tab-calendar">
+    <section class="hero-metrics stats-row" aria-label="Key metrics">
+      <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total Bookings</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-confirmed" style="color:var(--green)">—</div><div class="stat-label">Confirmed</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-pending" style="color:var(--amber)">—</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-invoiced" style="color:var(--navy-mid)">—</div><div class="stat-label">Invoiced</div></div>
+      <div class="stat-card" id="stat-pending-deletions-card" style="cursor:pointer;display:none" onclick="openPendingDeletionsModal()">
+        <div class="stat-value" id="stat-pending-deletions" style="color:var(--red)">—</div>
+        <div class="stat-label">Deletion Requests</div>
+      </div>
+    </section>
+
+    <div class="card">
+      <div class="cal-nav">
+        <button class="btn btn-sm btn-outline" id="cal-prev">‹</button>
+        <h3 id="cal-month-label">—</h3>
+        <button class="btn btn-sm btn-outline" id="cal-next">›</button>
+      </div>
+      <div style="position:relative;overflow:hidden" id="cal-grid-wrapper">
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Bookings</div>
+          <div class="card-subtitle">Click a date to filter</div>
+        </div>
+        <button class="btn btn-amber btn-sm" id="btn-add-booking">+ New</button>
+      </div>
+      <div id="day-bookings">
+        <p style="color:var(--text-muted);font-size:.85rem">Select a date above to view bookings.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FLEET TAB ═══ -->
+  <div class="tab-panel" id="tab-fleet">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Fleet Vehicles</div>
+        <button class="btn btn-amber btn-sm" id="btn-add-vehicle">+ Add Vehicle</button>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Location</label>
+          <select id="fleet-filter-location" class="form-control">
+            <option value="">All Locations</option>
+            <option value="Cape Town">Cape Town</option>
+            <option value="Joburg">Joburg</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="fleet-filter-status" class="form-control">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="maintenance">In Maintenance</option>
+            <option value="decommissioned">Decommissioned</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Reg No</th><th>Model</th><th>Year</th>
+              <th>Location</th><th>Mileage</th><th>Next Service</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="fleet-tbody">
+            <tr><td colspan="8"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DRIVERS TAB ═══ -->
+  <div class="tab-panel" id="tab-drivers">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Active Trips</div></div>
+      <div class="table-wrapper"><table><thead><tr><th>Invoice</th><th>Client</th><th>Driver</th><th>Vehicle</th><th>Dates</th></tr></thead><tbody id="drivers-active-trips"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Upcoming Trips</div></div>
+      <div class="table-wrapper"><table><thead><tr><th>Invoice</th><th>Client</th><th>Driver</th><th>Vehicle</th><th>Start Date</th></tr></thead><tbody id="drivers-upcoming-trips"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Manage Drivers</div>
+        <button class="btn btn-amber btn-sm" id="btn-add-driver">+ Add Driver</button>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Location</label>
+          <select id="driver-filter-location" class="form-control">
+            <option value="">All Locations</option>
+            <option value="Cape Town">Cape Town</option>
+            <option value="Joburg">Joburg</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="driver-filter-status" class="form-control">
+            <option value="">All Statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Driver ID</th><th>Phone</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody id="drivers-manage-tbody"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ═══ RECON REVIEW TAB ═══ -->
+  <div class="tab-panel" id="tab-recon">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Driver Recon Sheets</div>
+          <div class="card-subtitle">Weekly trip & cost reports</div>
+        </div>
+      </div>
+      <div id="recon-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ REPORTS TAB ═══ -->
+  <div class="tab-panel" id="tab-reports">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Inspection Reports</div>
+          <div class="card-subtitle">Last 50 inspections</div>
+        </div>
+      </div>
+      <div id="reports-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+
+  <div class="tab-panel" id="tab-incidents"><div class="card"><div class="card-title">Incident Reports</div><div id="incident-list"></div></div></div>
+  <div class="tab-panel" id="tab-wages">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Wages Reconciliation</div>
+      </div>
+      <div id="wages-list"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Transfer Recon Submissions</div>
+          <div class="card-subtitle">Submitted weekly transfer recon sheets</div>
+        </div>
+      </div>
+      <div id="wages-transfer-recon-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ TRANSFER RECON TAB ═══ -->
+  <div class="tab-panel" id="tab-transfer-recon">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Transfer Recon for Weekly Payment</div>
+          <div class="card-subtitle">All submitted driver transfer reconciliation sheets</div>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Filter by Driver</label>
+          <select id="tr-filter-driver" class="form-control">
+            <option value="">All Drivers</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Week Starting</label>
+          <input type="date" id="tr-filter-week" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="tr-filter-status" class="form-control">
+            <option value="">All</option>
+            <option value="submitted">Submitted</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+        <div class="form-group" style="align-self:flex-end">
+          <button class="btn btn-outline" onclick="loadTransferReconReview()">Apply</button>
+        </div>
+      </div>
+      <div id="transfer-recon-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-checklists"><div class="card"><div class="card-title">Vehicle Checklists</div><div id="checklist-list"></div></div></div>
+
+  <!-- ═══ TRAFFIC FINES TAB ═══ -->
+  <div class="tab-panel" id="tab-traffic-fines">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Traffic Fine Lookup</div>
+          <div class="card-subtitle">Find who was assigned to a vehicle at the exact fine date/time.</div>
+        </div>
+      </div>
+      <form id="fine-lookup-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vehicle <span class="required">*</span></label>
+            <select id="fine-vehicle" class="form-control" required>
+              <option value="">Loading vehicles…</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fine Date &amp; Time <span class="required">*</span></label>
+            <input type="datetime-local" id="fine-timestamp" class="form-control" step="1" required>
+          </div>
+          <div class="form-group" style="align-self:flex-end">
+            <button type="submit" class="btn btn-amber btn-full">Lookup Driver</button>
+          </div>
+        </div>
+      </form>
+      <div id="fine-lookup-result" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card" id="fine-log-card" style="display:none">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Log Fine &amp; Notify Driver</div>
+          <div class="card-subtitle">A profile email or alternate email is required before the fine can be saved.</div>
+        </div>
+      </div>
+      <form id="fine-log-form">
+        <input type="hidden" id="fine-booking-id">
+        <input type="hidden" id="fine-driver-id">
+        <input type="hidden" id="fine-vehicle-reg">
+        <input type="hidden" id="fine-log-timestamp">
+        <div class="form-row">
+          <div class="form-group"><label>Fine Reference</label><input type="text" id="fine-reference" class="form-control" placeholder="Notice/reference number"></div>
+          <div class="form-group"><label>Amount</label><input type="number" min="0" step="0.01" id="fine-amount" class="form-control" placeholder="0.00"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Location</label><input type="text" id="fine-location" class="form-control" placeholder="Camera / road / area"></div>
+          <div class="form-group"><label>Alternate Notification Email</label><input type="email" id="fine-notification-email" class="form-control" placeholder="Optional if driver profile has email"></div>
+        </div>
+        <div class="form-group"><label>Description / Notes</label><textarea id="fine-description" class="form-control" rows="3" placeholder="Fine details, issuing authority, notes…"></textarea></div>
+        <button type="submit" class="btn btn-amber btn-full">Save Fine &amp; Send Email</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Logged Traffic Fines</div>
+          <div class="card-subtitle">Most recent 100 fines.</div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="loadAdminTrafficFines()">Refresh</button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Fine Time</th><th>Vehicle</th><th>Driver</th><th>Booking</th><th>Reference</th><th>Amount</th><th>Email</th></tr></thead>
+          <tbody id="traffic-fines-tbody"><tr><td colspan="7"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ INSPECTIONS TAB ═══ -->
+  <div class="tab-panel" id="tab-inspections">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Inspection Sheets</div>
+          <div class="card-subtitle">All vehicle inspections — click any row to view detail or download PDF</div>
+        </div>
+        <button class="btn btn-amber" onclick="openAdminInspectionModal()">+ New Inspection</button>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Vehicle Reg</label>
+          <input type="text" id="insp-filter-vehicle" class="form-control"
+            placeholder="e.g. CA 123" oninput="loadAdminInspections()">
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="insp-filter-date" class="form-control"
+            onchange="loadAdminInspections()">
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;margin-bottom:0">
+            <input type="checkbox" id="insp-filter-faults"
+              style="width:16px;height:16px;accent-color:var(--red)"
+              onchange="loadAdminInspections()">
+            Faults only
+          </label>
+        </div>
+      </div>
+      <div id="admin-inspections-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-bookings-archive">
+    <div class="card">
+      <div class="card-title">Bookings Archive</div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label><select id="archive-status-filter" class="form-control"><option value="all">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="invoiced">Invoiced</option></select></div>
+        <div class="form-group"><label>From Date</label><input type="date" id="archive-from-date" class="form-control"></div>
+        <div class="form-group"><label>To Date</label><input type="date" id="archive-to-date" class="form-control"></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Invoice No</th><th>Client</th><th>Driver</th><th>Vehicle</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Documents</th><th>Actions</th></tr></thead><tbody id="bookings-archive-tbody"></tbody></table></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Driver Modal -->
+<div class="modal-overlay" id="modal-driver">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-driver-title">Add Driver</span>
+      <button class="modal-close" onclick="closeModal('modal-driver')">✕</button>
+    </div>
+    <form id="form-driver">
+      <input type="hidden" id="driver-id">
+      <div class="form-group"><label>Name <span class="required">*</span></label><input type="text" id="driver-name-input" class="form-control" required></div>
+      <div class="form-group" id="driver-email-group"><label>Email <span class="required">*</span></label><input type="email" id="driver-email-input" class="form-control"></div>
+      <div class="form-group" id="driver-code-group" style="display:none"><label>Driver ID</label><input type="text" id="driver-code-input" class="form-control" readonly></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="driver-phone-input" class="form-control"></div>
+      <div class="form-group" id="driver-active-group" style="display:none"><label>Status</label><select id="driver-active-input" class="form-control"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+      <div class="form-group" id="driver-location-group">
+        <label>Location <span class="required">*</span></label>
+        <select id="driver-location-input" class="form-control">
+          <option value="Cape Town">Cape Town</option>
+          <option value="Joburg">Joburg</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-amber btn-full">Save Driver</button>
+    </form>
+  </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal-overlay" id="modal-booking">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-booking-title">New Booking</span>
+      <button class="modal-close" onclick="closeModal('modal-booking')">✕</button>
+    </div>
+    <form id="form-booking">
+      <input type="hidden" id="booking-id">
+      <div class="form-row">
+        <div class="form-group"><label>Invoice No <span class="required">*</span></label><input type="text" id="booking-invoice" class="form-control" required></div>
+        <div class="form-group"><label>Client Name <span class="required">*</span></label><input type="text" id="booking-client" class="form-control" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Tour Reference</label><input type="text" id="booking-tour-reference" class="form-control" placeholder="e.g. Cape Town → George"></div>
+        <div class="form-group"><label>Start Date <span class="required">*</span></label><input type="date" id="booking-start-date" class="form-control" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>End Date <span class="required">*</span></label><input type="date" id="booking-end-date" class="form-control" required></div>
+        <div class="form-group"><label>Assign Driver</label><select id="booking-driver" class="form-control"><option value="">— Unassigned —</option></select></div>
+      </div>
+      <div class="form-group"><label>Assign Vehicle</label><select id="booking-vehicle" class="form-control"><option value="">— Unassigned —</option></select></div>
+      <!-- RENTED VEHICLE TOGGLE -->
+      <div class="form-group" id="rented-vehicle-section">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="booking-is-rented" style="width:18px;height:18px;accent-color:var(--amber)">
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">
+            This booking uses a <strong>rented vehicle</strong> (not from the owned fleet)
+          </span>
+        </label>
+      </div>
+
+      <div id="rented-vehicle-fields" style="display:none;background:#fffbeb;border:1.5px solid var(--amber);border-radius:var(--radius);padding:14px;margin-bottom:14px">
+        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--amber-dark);margin-bottom:10px">
+          🚗 Rented Vehicle Details
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label for="booking-rented-vehicle-select">Select existing rented vehicle</label>
+          <select id="booking-rented-vehicle-select" class="form-control">
+            <option value="">— or enter details below —</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label for="booking-rented-reg">Registration No <span class="required">*</span></label>
+            <input type="text" id="booking-rented-reg" class="form-control" placeholder="e.g. CA 123 456">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label for="booking-rented-model">Make / Model <span class="required">*</span></label>
+            <input type="text" id="booking-rented-model" class="form-control" placeholder="e.g. Toyota Quantum">
+          </div>
+        </div>
+        <input type="hidden" id="booking-rented-vehicle-id">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="booking-status" class="form-control">
+          <option value="invoiced">Invoiced</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="active">Active</option>
+          <option value="in-transit">In-Transit</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Payment Status</label><select id="booking-payment-status" class="form-control"><option value="unpaid">Unpaid</option><option value="partially_paid">Partially Paid</option><option value="paid">Paid</option></select></div>
+      <div class="form-group">
+        <label>Receipt Number <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">(leave blank if unpaid)</span></label>
+        <input type="text" id="booking-receipt-number" class="form-control" placeholder="e.g. RCP-2025-001">
+      </div>
+      <div class="form-group">
+        <label>Booking Documents</label>
+        <input type="file" id="booking-documents-input" class="form-control" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple>
+        <div id="booking-documents-list" style="margin-top:8px;font-size:.82rem"></div>
+      </div>
+      <div class="form-group">
+        <label>Itinerary <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">(admin only — visible to assigned driver)</span></label>
+        <input type="file" id="booking-itinerary-input" class="form-control" accept=".pdf,.doc,.docx">
+        <div id="booking-itinerary-preview" style="margin-top:6px;font-size:.82rem"></div>
+      </div>
+      <div id="booking-lock-notice" style="display:none;color:var(--red);font-weight:700">🔒 Booking is locked after completion.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="submit" class="btn btn-amber btn-full">Save Booking</button><button type="button" id="btn-mark-complete" class="btn btn-outline">Mark as Complete</button><button type="button" id="btn-request-delete" class="btn btn-danger btn-sm" onclick="openBookingDeleteRequest()" style="display:none">🗑 Request Deletion</button><button type="button" id="btn-add-inspection" class="btn btn-outline btn-sm" onclick="openAdminInspectionFromBooking()" style="display:none">🔍 Add Inspection</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Admin Inspection Modal -->
+<div class="modal-overlay" id="modal-admin-inspection">
+  <div class="modal" style="max-width:680px;max-height:92vh;overflow-y:auto">
+    <div class="modal-header">
+      <span class="modal-title">🔍 Admin Inspection Sheet</span>
+      <button class="modal-close" onclick="closeModal('modal-admin-inspection')">✕</button>
+    </div>
+    <form id="form-admin-inspection" onsubmit="event.preventDefault()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Link to Booking</label>
+          <select id="admin-insp-booking" class="form-control">
+            <option value="">— No booking link —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Invoice No</label>
+          <input type="text" id="admin-insp-invoice" class="form-control"
+            placeholder="Auto-filled from booking">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fleet Vehicle</label>
+          <select id="admin-insp-vehicle" class="form-control">
+            <option value="">— Select fleet vehicle —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Or Reg (rented / external)</label>
+          <input type="text" id="admin-insp-vehicle-manual" class="form-control"
+            placeholder="e.g. CA 123 456" style="text-transform:uppercase">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Inspection Type <span class="required">*</span></label>
+          <select id="admin-insp-type" class="form-control" required>
+            <option value="">— Select type —</option>
+            <option value="pre-trip">Pre-Trip</option>
+            <option value="post-trip">Post-Trip</option>
+            
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Mileage at Inspection</label>
+          <input type="number" id="admin-insp-mileage" class="form-control"
+            placeholder="e.g. 154200" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="admin-insp-notes" class="form-control" rows="2"
+          placeholder="Additional observations…"></textarea>
+      </div>
+      <div style="margin:14px 0 6px;font-weight:700;color:var(--navy);font-size:.92rem;border-top:1px solid var(--border);padding-top:12px">
+        Vehicle Inspection Checklist
+      </div>
+      <div id="admin-checklist-container"></div>
+      <div id="admin-fault-summary" style="margin-top:8px"></div>
+      <div class="form-group" style="margin-top:14px">
+        <label>Inspection Photos</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1.5px dashed var(--border);border-radius:var(--radius);font-size:.85rem;color:var(--text-muted)">
+          <span>📷 Tap to add photos</span>
+          <input type="file" id="admin-insp-photos" accept="image/*"
+            capture="environment" multiple style="display:none">
+        </label>
+        <div id="admin-insp-media-preview" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px"></div>
+      </div>
+      <button type="button" id="btn-submit-admin-inspection"
+        class="btn btn-amber btn-full" style="margin-top:14px;padding:13px"
+        onclick="submitAdminInspection()">
+        Submit Inspection
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- OTP Verification Modal (Features 3 & 6) -->
+<div class="modal-overlay" id="modal-otp-verify">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">🔐 Action Verification</span>
+      <button class="modal-close" onclick="cancelOTPVerification()">✕</button>
+    </div>
+    <p id="otp-modal-desc" style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5">
+      A one-time password has been sent to the admin email address.
+    </p>
+    <div class="form-group">
+      <label>Enter 6-digit OTP <span class="required">*</span></label>
+      <input type="text" id="otp-input" class="form-control" maxlength="6" inputmode="numeric" pattern="\d{6}" placeholder="000000" autocomplete="one-time-code" style="letter-spacing:6px;text-align:center;font-size:1.6rem;font-weight:800">
+    </div>
+    <div id="otp-attempts-notice" style="display:none;color:var(--red);font-size:.82rem;margin-bottom:10px;font-weight:600"></div>
+    <button class="btn btn-amber btn-full" id="btn-verify-otp" onclick="submitOTPVerification()">Verify & Proceed</button>
+    <p style="font-size:.73rem;color:var(--text-muted);text-align:center;margin-top:10px">OTP valid for 15 minutes · Max 3 attempts</p>
+  </div>
+</div>
+
+<!-- Vehicle Modal -->
+<div class="modal-overlay" id="modal-vehicle">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-vehicle-title">Add Vehicle</span>
+      <button class="modal-close" onclick="closeModal('modal-vehicle')">✕</button>
+    </div>
+    <form id="form-vehicle">
+      <input type="hidden" id="vehicle-id">
+      <div class="form-row">
+        <div class="form-group"><label>Registration No <span class="required">*</span></label><input type="text" id="vehicle-reg" class="form-control" required placeholder="CA 123 456"></div>
+        <div class="form-group"><label>Status</label><select id="vehicle-status" class="form-control"><option value="active">Active</option><option value="maintenance">In Maintenance</option><option value="decommissioned">Decommissioned</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Make</label><input type="text" id="vehicle-make" class="form-control" placeholder="Toyota"></div>
+        <div class="form-group"><label>Model <span class="required">*</span></label><input type="text" id="vehicle-model" class="form-control" required placeholder="Quantum 2.5 TDi"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Year</label><input type="number" id="vehicle-year" class="form-control" min="1990" max="2030" placeholder="2022"></div>
+        <div class="form-group"><label>Current Mileage (km)</label><input type="number" id="vehicle-mileage" class="form-control" min="0" placeholder="85000"></div>
+      </div>
+      <div class="form-group"><label>Next Service Due (km)</label><input type="number" id="vehicle-service-km" class="form-control" min="0" placeholder="90000"></div>
+      <div class="form-group"><label>Vehicle Color</label><input type="color" id="vehicle-color" class="form-control" value="#3498db"></div>
+      <div class="form-group"><label>Notes</label><textarea id="vehicle-notes" class="form-control" rows="2"></textarea></div>
+      <div class="form-group">
+        <label>Location <span class="required">*</span></label>
+        <select id="vehicle-location" class="form-control">
+          <option value="Cape Town">Cape Town</option>
+          <option value="Joburg">Joburg</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-amber btn-full">Save Vehicle</button>
+    </form>
+  </div>
+</div>
+
+<!-- Report Detail Modal -->
+<div class="modal-overlay" id="modal-report-detail">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Inspection Report</span>
+      <button class="modal-close" onclick="closeModal('modal-report-detail')">✕</button>
+    </div>
+    <input type="hidden" id="report-detail-id">
+    <div id="report-detail-body"></div>
+  </div>
+</div>
+
+<!-- Recon Detail Modal -->
+<div class="modal-overlay" id="modal-recon-detail">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Recon Sheet Detail</span>
+      <button class="modal-close" onclick="closeModal('modal-recon-detail')">✕</button>
+    </div>
+    <input type="hidden" id="recon-detail-id">
+    <div id="recon-detail-body"></div>
+  </div>
+</div>
+
+<!-- Transfer Recon Detail Modal -->
+<div class="modal-overlay" id="modal-transfer-recon-detail">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <span class="modal-title">Transfer Recon Detail</span>
+      <button class="modal-close" onclick="closeModal('modal-transfer-recon-detail')">✕</button>
+    </div>
+    <input type="hidden" id="transfer-recon-detail-id">
+    <div id="transfer-recon-detail-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Booking Delete Request Modal -->
+<div class="modal-overlay" id="modal-booking-delete-request">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">🗑 Request Booking Deletion</span>
+      <button class="modal-close" onclick="closeModal('modal-booking-delete-request')">✕</button>
+    </div>
+    <input type="hidden" id="delete-request-booking-id">
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5">
+      Deletion is permanent and irreversible. An OTP will be sent to the main admin email
+      for authorization. Provide a clear reason before submitting.
+    </p>
+    <div class="form-group">
+      <label>Reason for Deletion <span class="required">*</span></label>
+      <textarea id="delete-request-reason" class="form-control" rows="3"
+        placeholder="Explain why this booking must be deleted…" required></textarea>
+    </div>
+    <div class="form-group">
+      <label>Cancellation Type <span class="required">*</span></label>
+      <select id="delete-request-type" class="form-control">
+        <option value="mistake">Admin / data entry mistake</option>
+        <option value="client_cancelled">Client cancelled</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger btn-full" id="btn-submit-delete-request"
+              onclick="submitBookingDeleteRequest()">
+        Submit Delete Request &amp; Send OTP
+      </button>
+      <button class="btn btn-outline" onclick="closeModal('modal-booking-delete-request')">
+        Cancel
+      </button>
+    </div>
+    <p style="font-size:.72rem;color:var(--text-muted);text-align:center;margin-top:10px">
+      OTP valid for 15 minutes · irreversible once approved
+    </p>
+  </div>
+</div>
+
+<!-- Pending Deletions Review Modal (main admin only) -->
+<div class="modal-overlay" id="modal-pending-deletions">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <span class="modal-title">Pending Booking Deletions</span>
+      <button class="modal-close" onclick="closeModal('modal-pending-deletions')">✕</button>
+    </div>
+    <div id="pending-deletions-body"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ── SCRIPTS ──────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css"/>
+<script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

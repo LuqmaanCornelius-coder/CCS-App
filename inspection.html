@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f2744">
+  <title>INYATHI — Inspection</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+</head>
+<body>
+
+<div id="offline-banner">📵 Offline — inspection will be saved and synced when reconnected</div>
+
+<!-- ── SIDEBAR OVERLAY ──────────────────────────────────────── -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<nav id="app-sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">IN<span>YATHI</span></div>
+    <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
+  </div>
+  <div class="sidebar-user">
+    <div class="sidebar-user-name" id="sidebar-driver-name">Driver</div>
+    <div class="sidebar-user-role">Driver Portal</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-nav-item">
+      <a href="driver-dashboard.html" class="sidebar-nav-link">
+        <span class="sidebar-nav-icon">✅</span> My Tasks
+      </a>
+    </div>
+    <div class="sidebar-nav-item">
+      <a href="inspection.html" class="sidebar-nav-link active">
+        <span class="sidebar-nav-icon">🔍</span> Inspection Sheet
+      </a>
+    </div>
+    <div class="sidebar-nav-item">
+      <a href="driver-dashboard.html#recon" class="sidebar-nav-link">
+        <span class="sidebar-nav-icon">📊</span> Recon Sheet
+      </a>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-nav-item">
+      <span data-sync-wrapper style="display:none">
+        <button class="sidebar-nav-link" style="color:var(--amber)">
+          <span class="sidebar-nav-icon">🔄</span> Pending Sync: <span class="sync-count">0</span>
+        </button>
+      </span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="sidebar-logout" id="btn-signout-sidebar">
+      <span class="sidebar-nav-icon">⏻</span> Sign Out
+    </button>
+  </div>
+</nav>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="app-header">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn-icon" id="sidebar-toggle" aria-label="Open menu">
+      <div class="hamburger-icon"><span></span><span></span><span></span></div>
+    </button>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2">
+        <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      IN<span>YATHI</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span data-sync-wrapper style="display:none">
+      <span class="sync-count sync-badge">0</span>
+    </span>
+    <span class="header-user" id="driver-name"></span>
+  </div>
+</header>
+
+<main class="main" style="padding-bottom:90px">
+  <div class="inspection-progress" aria-label="Inspection progress">
+    <span class="is-active">1. Vehicle</span><span>2. Checklist</span><span>3. Media</span><span>4. Signatures</span><span>5. Submit</span>
+  </div>
+
+  <div id="success-section" style="display:none">
+    <div class="card" style="text-align:center;padding:36px 20px">
+      <div style="font-size:3.2rem;margin-bottom:12px">✅</div>
+      <h2 style="color:var(--navy);margin-bottom:8px">Inspection Submitted</h2>
+      <p style="color:var(--text-muted);margin-bottom:20px">Your inspection has been recorded successfully.</p>
+      <div id="wa-alert-section" style="display:none;margin-bottom:16px">
+        <div class="fault-alert" style="text-align:left">
+          <div class="fault-icon">⚠</div>
+          <div class="fault-text">
+            Critical faults detected. An automated alert has been sent to admin.
+            <br><br>
+            <a id="wa-alert-link" href="#" target="_blank" style="background:#25D366;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;display:inline-block;text-decoration:none">
+              📱 Also send via WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn btn-amber btn-full" onclick="location.reload()">Start New Inspection</button>
+        <a href="driver-dashboard.html" class="btn btn-outline btn-full">Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <form id="form-inspection">
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">Vehicle &amp; Trip Details</div>
+      <div class="form-group">
+        <label for="vehicle-select">Vehicle <span class="required">*</span></label>
+        <select id="vehicle-select" class="form-control" required>
+          <option value="">— Select vehicle —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="insp-type">Inspection Type <span class="required">*</span></label>
+        <select id="insp-type" class="form-control" required>
+          <option value="">— Select type —</option>
+          <option value="pre-trip">Pre-Trip</option>
+          <option value="post-trip">Post-Trip</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="mileage-input">Current Mileage (km)</label>
+          <input type="number" id="mileage-input" class="form-control" min="0" placeholder="85000">
+        </div>
+        <div class="form-group">
+          <label for="invoice-select">Link to Booking</label>
+          <select id="invoice-select" class="form-control">
+            <option value="">— None —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:4px">Photos &amp; Videos</div>
+      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:14px">Capture before &amp; after photos.</p>
+      <div style="margin-bottom:14px">
+        <div style="font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:8px;text-transform:uppercase">Before Trip</div>
+        <label class="media-capture-btn">
+          <span class="icon">📷</span><span>Tap to capture</span>
+          <input type="file" class="capture-input" data-type="before" accept="image/*,video/*" capture="environment" multiple>
+        </label>
+        <div class="media-preview" id="media-preview-before"></div>
+      </div>
+      <div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:8px;text-transform:uppercase">After Trip</div>
+        <label class="media-capture-btn">
+          <span class="icon">📷</span><span>Tap to capture</span>
+          <input type="file" class="capture-input" data-type="after" accept="image/*,video/*" capture="environment" multiple>
+        </label>
+        <div class="media-preview" id="media-preview-after"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Safety Checklist<span id="fault-count-label" style="color:var(--red)"></span></div>
+          <div class="card-subtitle">Mark each item as OK or Fault</div>
+        </div>
+      </div>
+      <div id="fault-summary"></div>
+      <div id="checklist-container"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Driver's Signature <span class="required">*</span></div>
+      <div style="border:2px dashed var(--border);border-radius:8px;background:#fff">
+        <canvas id="driver-signature-pad" style="width:100%;height:140px;touch-action:none"></canvas>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline" id="clear-driver-sig" style="margin-top:10px">Clear Signature</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Client Signature <span class="required">*</span></div>
+      <div style="border:2px dashed var(--border);border-radius:8px;background:#fff">
+        <canvas id="client-signature-pad" style="width:100%;height:140px;touch-action:none"></canvas>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline" id="clear-client-sig" style="margin-top:10px">Clear Signature</button>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="inspection-pdf-input">Attach Inspection Report (PDF)</label>
+        <input type="file" accept=".pdf" id="inspection-pdf-input" class="form-control" multiple>
+        <div id="pdf-preview"></div>
+      </div>
+      <div id="inspection-pdfs"></div>
+    </div>
+
+    <div class="card">
+      <div class="form-group" style="margin-bottom:0">
+        <label for="notes-input">Additional Notes</label>
+        <textarea id="notes-input" class="form-control" placeholder="Additional observations..." rows="3"></textarea>
+      </div>
+    </div>
+
+  </form>
+</main>
+
+<div style="position:fixed;bottom:0;left:0;right:0;padding:10px 14px;background:linear-gradient(transparent,rgba(240,244,248,.98) 40%);z-index:88">
+  <button type="submit" form="form-inspection" class="btn btn-amber btn-full" id="btn-submit" style="padding:14px;font-size:1rem;box-shadow:0 4px 16px rgba(245,158,11,.4)">
+    Submit Inspection
+  </button>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="pdf-generator.js"></script>
+<script src="inspection.js"></script>
+</body>
+</html>
